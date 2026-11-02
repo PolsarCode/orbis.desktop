@@ -2,6 +2,10 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, like 0.102.0 (leave empty to use the one in tauri.conf.json)
+        required: false
 
 permissions:
   contents: write
@@ -41,6 +45,18 @@ jobs:
           workspaces: src-tauri -> target
 
       - run: npm install
+
+      - name: Set the app version
+        if: inputs.version != ''
+        shell: bash
+        run: |
+          node -e '
+            const fs = require("fs");
+            const file = "src-tauri/tauri.conf.json";
+            const config = JSON.parse(fs.readFileSync(file, "utf8"));
+            config.version = process.argv[1];
+            fs.writeFileSync(file, JSON.stringify(config, null, 2) + "\n");
+          ' "${{ inputs.version }}"
 
       - uses: tauri-apps/tauri-action@v0
         env:

@@ -5,6 +5,7 @@
   "scripts": {
     "develop": "tauri dev",
     "bundle": "tauri build",
+    "deploy": "bash ./scripts/deployment/deploy.sh",
     "tauri": "tauri"
   },
   "devDependencies": {

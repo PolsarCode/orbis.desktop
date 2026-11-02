@@ -41,6 +41,15 @@
     ],
     "android": {
       "debugApplicationIdSuffix": ".debug"
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDg5RTA2NDc0NzRCOEY3MjkKUldRcDk3aDBkR1RnaWIrakF1bGo4ZHZ2clYvTEJxaWdrWisxdHl0QTZZcHdrNUFTbVJHMHVRSUoK",
+      "endpoints": [
+        "https://github.com/PolsarCode/orbis.desktop/releases/latest/download/latest.json"
+      ]
     }
   }
 }

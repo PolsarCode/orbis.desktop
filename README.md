@@ -21,3 +21,12 @@ pnpm --filter orbis-desktop run bundle
 ```
 
 The installers end up in `src-tauri/target/release/bundle`.
+
+## Release
+
+1. Bump `version` in `src-tauri/tauri.conf.json`, commit, and push.
+2. On GitHub, open **Actions → Release → Run workflow**.
+
+It builds the macOS (Apple Silicon and Intel), Windows, and Linux installers and publishes them as the `v<version>` release. The download button on the Orbis landing page always points at the latest release.
+
+The installers aren't code-signed yet, so macOS and Windows warn people the first time they open them.

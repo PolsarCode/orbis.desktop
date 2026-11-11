@@ -8,6 +8,7 @@ pub fn run() {
     ))
     .plugin(tauri_plugin_updater::Builder::new().build())
     .setup(|app| {
+      open_main_window(app)?;
       #[cfg(not(debug_assertions))]
       start_on_login_by_default(app);
       #[cfg(not(debug_assertions))]
@@ -23,6 +24,45 @@ pub fn run() {
     })
     .run(tauri::generate_context!())
     .expect("error while building tauri application");
+}
+
+fn open_main_window(app: &tauri::App) -> tauri::Result<()> {
+  use std::{collections::HashMap, path::PathBuf, sync::Mutex};
+  use tauri::webview::{DownloadEvent, NewWindowResponse};
+
+  let Some(config) = app.config().app.windows.first() else {
+    return Ok(());
+  };
+  let downloads = Mutex::new(HashMap::<String, PathBuf>::new());
+  tauri::WebviewWindowBuilder::from_config(app.handle(), config)?
+    .on_new_window(|url, _| {
+      if matches!(url.scheme(), "http" | "https" | "mailto") {
+        let _ = tauri_plugin_opener::open_url(url.as_str(), None::<&str>);
+      }
+      NewWindowResponse::Deny
+    })
+    .on_download(move |_, event| {
+      match event {
+        DownloadEvent::Requested { url, destination } => {
+          if let Ok(mut pending) = downloads.lock() {
+            pending.insert(url.to_string(), destination.clone());
+          }
+        }
+        DownloadEvent::Finished { url, path, success } => {
+          let saved = downloads
+            .lock()
+            .ok()
+            .and_then(|mut pending| pending.remove(url.as_str()));
+          if let (true, Some(path)) = (success, path.or(saved)) {
+            let _ = tauri_plugin_opener::reveal_item_in_dir(path);
+          }
+        }
+        _ => {}
+      }
+      true
+    })
+    .build()?;
+  Ok(())
 }
 
 #[cfg(not(debug_assertions))]

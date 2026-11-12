@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-starts-minimized"
+description = "Enables the starts_minimized command without any pre-configured scope."
+commands.allow = ["starts_minimized"]
+
+[[permission]]
+identifier = "deny-starts-minimized"
+description = "Denies the starts_minimized command without any pre-configured scope."
+commands.deny = ["starts_minimized"]

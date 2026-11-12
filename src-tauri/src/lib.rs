@@ -1,12 +1,16 @@
+const MINIMIZED_FLAG: &str = "--minimized";
+const SHOWN_ON_LOGIN_MARKER: &str = "show-on-login";
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_notification::init())
     .plugin(tauri_plugin_autostart::init(
       tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-      None,
+      Some(vec![MINIMIZED_FLAG]),
     ))
     .plugin(tauri_plugin_updater::Builder::new().build())
+    .invoke_handler(tauri::generate_handler![starts_minimized, set_starts_minimized])
     .setup(|app| {
       open_main_window(app)?;
       #[cfg(not(debug_assertions))]
@@ -62,7 +66,39 @@ fn open_main_window(app: &tauri::App) -> tauri::Result<()> {
       true
     })
     .build()?;
+  if std::env::args().any(|arg| arg == MINIMIZED_FLAG) && starts_minimized(app.handle().clone()) {
+    use tauri::Manager;
+    if let Some(window) = app.get_webview_window("main") {
+      let _ = window.minimize();
+    }
+  }
   Ok(())
+}
+
+fn shown_on_login_marker(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
+  use tauri::Manager;
+  app.path().app_config_dir().ok().map(|dir| dir.join(SHOWN_ON_LOGIN_MARKER))
+}
+
+#[tauri::command]
+fn starts_minimized(app: tauri::AppHandle) -> bool {
+  shown_on_login_marker(&app).is_none_or(|marker| !marker.exists())
+}
+
+#[tauri::command]
+fn set_starts_minimized(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+  let marker = shown_on_login_marker(&app).ok_or("No settings folder")?;
+  if enabled {
+    match std::fs::remove_file(&marker) {
+      Err(error) if error.kind() != std::io::ErrorKind::NotFound => Err(error.to_string()),
+      _ => Ok(()),
+    }
+  } else {
+    if let Some(dir) = marker.parent() {
+      std::fs::create_dir_all(dir).map_err(|error| error.to_string())?;
+    }
+    std::fs::write(&marker, "").map_err(|error| error.to_string())
+  }
 }
 
 #[cfg(not(debug_assertions))]

@@ -16,6 +16,8 @@
     "core:window:allow-start-dragging",
     "core:window:allow-set-badge-count",
     "core:window:allow-request-user-attention",
-    "autostart:default"
+    "autostart:default",
+    "allow-starts-minimized",
+    "allow-set-starts-minimized"
   ]
 }
